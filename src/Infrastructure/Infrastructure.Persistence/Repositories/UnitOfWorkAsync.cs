@@ -1,6 +1,5 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Repositories;
-using Domain.Entities;
 using Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -64,8 +63,10 @@ namespace Infrastructure.Persistence.Repositories
         }
 
         #region Repositories
+
         public IProductRepositoryAsync ProductRepo => new ProductRepositoryAsync(_context);
-        #endregion
+
+        #endregion Repositories
 
         #region IDisposable Support
 

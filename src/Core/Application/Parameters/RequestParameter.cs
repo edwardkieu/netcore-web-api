@@ -1,4 +1,4 @@
-﻿namespace Application.Filters
+﻿namespace Application.Parameters
 {
     public class RequestParameter
     {

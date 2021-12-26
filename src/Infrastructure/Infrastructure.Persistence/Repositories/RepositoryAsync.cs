@@ -21,32 +21,35 @@ namespace Infrastructure.Persistence.Repositories
         public IQueryable<T> FindAll(params Expression<Func<T, object>>[] includeProperties)
         {
             IQueryable<T> items = _context.Set<T>();
-            if (includeProperties != null)
+            if (includeProperties == null) 
+                return items;
+
+            foreach (var includeProperty in includeProperties)
             {
-                foreach (var includeProperty in includeProperties)
-                {
-                    items = items.Include(includeProperty);
-                }
+                items = items.Include(includeProperty);
             }
+
             return items;
         }
 
         public IQueryable<T> FindAll(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includeProperties)
         {
             IQueryable<T> items = _context.Set<T>();
-            if (includeProperties != null)
+            if (includeProperties == null) 
+                return items.Where(predicate);
+
+            foreach (var includeProperty in includeProperties)
             {
-                foreach (var includeProperty in includeProperties)
-                {
-                    items = items.Include(includeProperty);
-                }
+                items = items.Include(includeProperty);
             }
+
             return items.Where(predicate);
         }
 
         public async Task<T> FindByIdAsync(object id, params Expression<Func<T, object>>[] includeProperties)
         {
             var entity = _context.Set<T>().Find(id);
+
             return await FindAll(includeProperties).FirstOrDefaultAsync(x => x.Equals(entity));
         }
 
