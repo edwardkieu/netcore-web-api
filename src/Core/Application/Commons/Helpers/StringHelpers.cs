@@ -91,11 +91,11 @@ namespace Application.Commons.Helpers
             return "";
         }
 
-        public static bool ValidateJson(string s)
+        public static bool ValidateJson(string jsonValue)
         {
             try
             {
-                JToken.Parse(s);
+                JToken.Parse(jsonValue);
                 return true;
             }
             catch
@@ -104,7 +104,7 @@ namespace Application.Commons.Helpers
             }
         }
 
-        public static T ConvertIntoObject<T>(string json)
+        public static T ConvertToObject<T>(string json)
         {
             return ValidateJson(json) ? JsonConvert.DeserializeObject<T>(json) : default(T);
         }
