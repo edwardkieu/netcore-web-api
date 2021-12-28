@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Application.Commons.Extensions
 {
-    public static class HttpClientFactoryExtentions
+    public static class HttpClientFactoryExtensions
     {
         /// <summary>
         /// REGISTER: services.AddHttpClient(), Constants.ProductAPIBase = Configuration["ServiceUrls:ProductAPI"];

@@ -59,7 +59,7 @@ namespace WebApi
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host
             .CreateDefaultBuilder(args)
-            //Uses Serilog instead of default .NET Logger
+            //Use Serilog instead of default .NET Logger
             .UseSerilog()
             .ConfigureWebHostDefaults(webBuilder =>
             {

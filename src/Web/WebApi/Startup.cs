@@ -57,6 +57,7 @@ namespace WebApi
                 app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
+
             //app.UseHttpsRedirection();
             app.UseSerilogRequestLogging();
             app.UseRouting();
@@ -77,7 +78,7 @@ namespace WebApi
                  endpoints.MapHealthChecks("/healthcheck", new HealthCheckOptions
                  {
                     AllowCachingResponses = false,
-                     Predicate = (check) => check.Tags.Contains("example") || check.Tags.Contains("abc"),
+                    Predicate = (check) => check.Tags.Contains("example") || check.Tags.Contains("abc"),
                     ResultStatusCodes =
                     {
                         [HealthStatus.Healthy] = StatusCodes.Status200OK,
