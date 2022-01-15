@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Application.Wrappers;
 
 namespace WebApi.Controllers
 {
@@ -10,10 +11,19 @@ namespace WebApi.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
+        private readonly IAuthenticatedUserService _authenticatedUserService;
 
-        public AccountController(IAccountService accountService)
+        public AccountController(IAccountService accountService, IAuthenticatedUserService authenticatedUserService)
         {
             _accountService = accountService;
+            _authenticatedUserService = authenticatedUserService;
+        }
+
+        [HttpGet("context")]
+        public async Task<IActionResult> ContextAsync(string token)
+        {
+            var result = new Response<UserContextDto>(_authenticatedUserService.CurrentUser);
+            return Ok(await Task.FromResult(result));
         }
 
         [HttpPost("authenticate")]

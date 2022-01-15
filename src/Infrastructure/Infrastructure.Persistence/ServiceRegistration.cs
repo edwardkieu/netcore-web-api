@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using System;
+using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Repositories;
@@ -18,10 +19,19 @@ namespace Infrastructure.Persistence
             }
             else
             {
-                services.AddDbContext<ApplicationDbContext>(options =>
-               options.UseSqlServer(
-                   configuration.GetConnectionString("DefaultConnection"),
-                   b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+                //services.AddDbContext<ApplicationDbContext>(options =>
+                //options.UseSqlServer(
+                //   configuration.GetConnectionString("DefaultConnection"),
+                //   b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+                
+                services.AddDbContextPool<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                        sqlServerOptionsAction: sqlOptions =>
+                        {
+                            sqlOptions.EnableRetryOnFailure(maxRetryCount: 10, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                        });
+                });
             }
 
             #region Repositories
