@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 
 namespace WebApi.Services
@@ -15,6 +16,7 @@ namespace WebApi.Services
         {
             _httpContextAccessor = httpContextAccessor;
             _accountService = accountService;
+            
         }
 
         public string UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue("uid");
@@ -27,6 +29,14 @@ namespace WebApi.Services
         {
             var claim = _httpContextAccessor.HttpContext?.User?.Claims.FirstOrDefault(x => x.Type == claimType);
             return (claim != null) ? claim.Value : string.Empty;
+        }
+
+        public string GetHostNameFromRemoteIpAddress()
+        {
+            var remoteIp = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress;
+            var hostEntry = Dns.GetHostEntry(remoteIp);
+
+            return hostEntry.HostName;
         }
     }
 }
