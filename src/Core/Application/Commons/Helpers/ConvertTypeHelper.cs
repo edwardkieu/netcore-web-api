@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Application.Commons.Helpers
 {
@@ -63,6 +66,14 @@ namespace Application.Commons.Helpers
         public static string ToString(object obj)
         {
             return obj?.ToString() ?? string.Empty;
+        }
+
+        public static Dictionary<string, object> ToDictionary(this object obj)
+        {
+            return obj
+                .GetType()
+                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .ToDictionary(prop => prop.Name, prop => prop.GetValue(obj, null));
         }
     }
 }

@@ -57,7 +57,7 @@ namespace WebApi
                 app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
-
+            app.UseErrorHandlingMiddleware();
             //app.UseHttpsRedirection();
             app.UseSerilogRequestLogging();
             app.UseRouting();
@@ -70,8 +70,6 @@ namespace WebApi
             app.UseDefaultFiles();
             app.UseStaticFiles();
             app.UseSwaggerExtension();
-            app.UseErrorHandlingMiddleware();
-
             app.UseEndpoints(endpoints =>
              {
                  endpoints.MapControllers();

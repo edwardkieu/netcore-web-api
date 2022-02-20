@@ -22,6 +22,8 @@ namespace Application.Interfaces
 
         Task UpdateAsync(T entity, bool isSaveChange = false);
 
+        Task UpdateAsync(T entity, bool isSaveChange = false, params Expression<Func<T, object>>[] properties);
+
         Task UpdateRangeAsync(IEnumerable<T> entities, bool isSaveChange = false);
 
         Task RemoveAsync(T entity, bool isSaveChange = false);

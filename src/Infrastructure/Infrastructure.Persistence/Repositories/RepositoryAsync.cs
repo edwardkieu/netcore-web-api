@@ -85,6 +85,21 @@ namespace Infrastructure.Persistence.Repositories
             }
         }
 
+        public async Task UpdateAsync(T entity, bool isSaveChange = false, params Expression<Func<T, object>>[] properties)
+        {
+            var dbEntityEntry = _context.Entry(entity);
+
+            foreach (var property in properties)
+            {
+                dbEntityEntry.Property(property).IsModified = true;
+            }
+
+            if (isSaveChange)
+            {
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task UpdateRangeAsync(IEnumerable<T> entities, bool isSaveChange = false)
         {
             _context.Set<T>().UpdateRange(entities);

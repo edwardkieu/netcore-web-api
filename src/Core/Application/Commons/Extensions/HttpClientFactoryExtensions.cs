@@ -1,8 +1,9 @@
-﻿using Application.DTOs.HttpClient;
-using Application.Enums;
+﻿using Application.Commons.Helpers;
+using Application.DTOs.HttpClient;
 using Application.Wrappers;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -18,37 +19,48 @@ namespace Application.Commons.Extensions
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="httpClient"></param>
-        /// <param name="apiRequest"></param>
+        /// <param name="baseApiRequest"></param>
         /// <returns></returns>
-        public static async Task<T> SendAsync<T>(this IHttpClientFactory httpClient, ApiRequest apiRequest)
+        public static async Task<T> SendAsync<T>(this IHttpClientFactory httpClient, BaseApiRequest baseApiRequest)
         {
             try
             {
                 var client = httpClient.CreateClient("Name_API");
                 var message = new HttpRequestMessage();
-                message.Headers.Add("Accept", "application/json");
-                message.RequestUri = new Uri(apiRequest.Url);
-                client.DefaultRequestHeaders.Clear();
-                if (apiRequest.Data != null)
+                if (baseApiRequest is ApiRequestWidthFile apiRequestWithFile)
                 {
-                    message.Content = new StringContent(JsonConvert.SerializeObject(apiRequest.Data), Encoding.UTF8, "application/json");
+                    using var formData = new MultipartFormDataContent();
+                    using var streamContent = new StreamContent(apiRequestWithFile.FormFile.OpenReadStream());
+                    using var fileContent = new ByteArrayContent(await streamContent.ReadAsByteArrayAsync());
+
+                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
+                    apiRequestWithFile.Data.ToDictionary().Select(x => x).ForAll(x =>
+                    {
+                        formData.Add(new StringContent(x.Value.ToString()), x.Key);
+                    });
+
+                    formData.Add(fileContent, "file", apiRequestWithFile.FormFile.FileName);
+                    message.Content = formData;
+                }
+                else
+                {
+                    message.Headers.Add("Accept", "application/json");
+                    message.RequestUri = new Uri(baseApiRequest.Url);
+                    client.DefaultRequestHeaders.Clear();
+                    if (baseApiRequest.Data != null)
+                    {
+                        message.Content = new StringContent(JsonConvert.SerializeObject(baseApiRequest.Data), Encoding.UTF8, "application/json");
+                    }
+
+                    if (!string.IsNullOrEmpty(baseApiRequest.AccessToken))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", baseApiRequest.AccessToken);
+                    }
                 }
 
-                if (!string.IsNullOrEmpty(apiRequest.AccessToken))
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiRequest.AccessToken);
-                }
-
-                message.Method = apiRequest.ApiType switch
-                {
-                    ApiType.POST => HttpMethod.Post,
-                    ApiType.PUT => HttpMethod.Put,
-                    ApiType.DELETE => HttpMethod.Delete,
-                    _ => HttpMethod.Get
-                };
-
-                var apiResponse = await client.SendAsync(message);
-                var apiContent = await apiResponse.Content.ReadAsStringAsync();
+                message.Method = baseApiRequest.Method;
+                var apiResponse = await client.SendAsync(message).ConfigureAwait(false);
+                var apiContent = await apiResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                 var apiResponseDto = JsonConvert.DeserializeObject<T>(apiContent);
                 return apiResponseDto;
             }

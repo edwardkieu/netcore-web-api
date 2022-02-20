@@ -33,6 +33,16 @@ namespace Application.Commons.Extensions
         /// <returns></returns>
         public static IQueryable<T> AddQuery<T>(this IQueryable<T> query, Dictionary<string, string> uriQuery, object obj)
         {
+            //IQueryable<LegalHold> query = legalHolds.AsQueryable();
+            //var uirQuery = new Dictionary<string, string>()
+            //{
+            //    { "Id", Guid.NewGuid().ToString()},
+            //    { "Name", "name" },
+            //    { "Status", "123" },
+            //    { "SortBy", "Name:asc" }
+            //};
+
+            //_userCatalogService.AddQuery(query, uirQuery, new GetLegalHoldPackageResult());
             foreach (var data in uriQuery)
             {
                 var proper = obj.GetType().GetProperty(data.Key);
