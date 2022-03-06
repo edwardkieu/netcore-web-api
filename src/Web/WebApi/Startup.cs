@@ -58,10 +58,11 @@ namespace WebApi
                 app.UseHsts();
             }
             app.UseErrorHandlingMiddleware();
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
             app.UseSerilogRequestLogging();
             app.UseRouting();
-            app.UseCors(x => x.AllowAnyHeader()
+            app.UseCors(x => 
+                x.AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials()
                 .WithOrigins("http://localhost:3000"));

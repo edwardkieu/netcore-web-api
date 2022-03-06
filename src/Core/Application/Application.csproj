@@ -26,4 +26,9 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Products\Models\" />
+    <Folder Include="Features\Products\Services\" />
+  </ItemGroup>
+
 </Project>
