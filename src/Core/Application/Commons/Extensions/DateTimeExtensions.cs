@@ -109,5 +109,18 @@ namespace Application.Commons.Extensions
             if (dob.Date > today.AddYears(-age)) age--;
             return age;
         }
+
+        public static DateTime UnixTimeStampToDateTime(this double unixTimeStamp)
+        {
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dateTime = dateTime.AddSeconds(unixTimeStamp).ToUniversalTime();
+            return dateTime;
+        }
+
+        public static double DateTimeToUnixTimestamp(this DateTime dateTime)
+        {
+            return (TimeZoneInfo.ConvertTimeToUtc(dateTime) -
+                   new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc)).TotalSeconds;
+        }
     }
 }

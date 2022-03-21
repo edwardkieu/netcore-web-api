@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Application.Commons.Extensions
@@ -89,6 +90,71 @@ namespace Application.Commons.Extensions
                 }
             }
             return query;
+        }
+
+        //Inspired by https://stackoverflow.com/a/31959568/5274
+
+        static readonly MethodInfo SortOrderBy = typeof(Queryable).GetMethods()
+            .Where(m => m.Name == "OrderBy" && m.IsGenericMethodDefinition && m.GetParameters().Length == 2)
+            .Single();
+
+        static readonly MethodInfo SortOrderByDescending = typeof(Queryable).GetMethods()
+            .Where(m => m.Name == "OrderByDescending" && m.IsGenericMethodDefinition && m.GetParameters().Length == 2)
+            .Single();
+
+        static readonly MethodInfo SortThenBy = typeof(Queryable).GetMethods()
+            .Where(m => m.Name == "ThenBy" && m.IsGenericMethodDefinition && m.GetParameters().Length == 2)
+            .Single();
+
+        static readonly MethodInfo SortThenByDescending = typeof(Queryable).GetMethods()
+            .Where(m => m.Name == "ThenByDescending" && m.IsGenericMethodDefinition && m.GetParameters().Length == 2)
+            .Single();
+
+        public static IOrderedQueryable<TSource> OrderBy<TSource>(this IQueryable<TSource> query, string propertyName)
+        {
+            return BuildQuery(SortOrderBy, query, propertyName);
+        }
+
+        public static IOrderedQueryable<TSource> OrderBy<TSource>(this IQueryable<TSource> query, string propertyName, bool isDescending = false)
+        {
+            return isDescending ? BuildQuery(SortOrderByDescending, query, propertyName) : BuildQuery(SortOrderBy, query, propertyName);
+        }
+
+        public static IOrderedQueryable<TSource> ThenBy<TSource>(this IQueryable<TSource> query, string propertyName, bool isDescending = false)
+        {
+            return isDescending ? BuildQuery(SortThenByDescending, query, propertyName) : BuildQuery(SortThenBy, query, propertyName);
+        }
+
+        public static IOrderedQueryable<TSource> OrderByDescending<TSource>(this IQueryable<TSource> query, string propertyName)
+        {
+            return BuildQuery(SortOrderByDescending, query, propertyName);
+        }
+
+        public static IOrderedQueryable<TSource> ThenBy<TSource>(this IQueryable<TSource> query, string propertyName)
+        {
+            return BuildQuery(SortThenBy, query, propertyName);
+        }
+
+        public static IOrderedQueryable<TSource> ThenByDescending<TSource>(this IQueryable<TSource> query, string propertyName)
+        {
+            return BuildQuery(SortThenByDescending, query, propertyName);
+        }
+
+        private static IOrderedQueryable<TSource> BuildQuery<TSource>(MethodInfo method, IQueryable<TSource> query, string propertyName)
+        {
+            var entityType = typeof(TSource);
+
+            var propertyInfo = entityType.GetProperty(propertyName);
+            if (propertyInfo == null)
+                throw new ArgumentOutOfRangeException(nameof(propertyName), "Unknown column " + propertyName);
+
+            var arg = Expression.Parameter(entityType, "x");
+            var property = Expression.Property(arg, propertyName);
+            var selector = Expression.Lambda(property, new ParameterExpression[] { arg });
+
+            var genericMethod = method.MakeGenericMethod(entityType, propertyInfo.PropertyType);
+
+            return (IOrderedQueryable<TSource>)genericMethod.Invoke(genericMethod, new object[] { query, selector })!;
         }
     }
 }
