@@ -36,7 +36,7 @@ An Implementation of Clean Architecture with ASP.NET Core 3.1 WebApi. With this 
 - [ ] In-Memory Caching
 - [ ] Redis Caching
 - [x] In-Memory Database
-- [x] Microsoft Identity with JWT Authentication
+- [x] Microsoft Identity with JWT Authentication, RefreshToken
 - [x] Role based Authorization
 - [x] Identity Seeding
 - [x] Database Seeding
