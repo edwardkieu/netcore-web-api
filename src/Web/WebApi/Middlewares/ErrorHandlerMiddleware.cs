@@ -1,19 +1,13 @@
 ﻿using Application.Exceptions;
 using Application.Wrappers;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Serilog;
 
 namespace WebApi.Middlewares
 {
     public class ErrorHandlerMiddleware
     {
         private readonly RequestDelegate _next;
-        private static readonly ILogger Log = Serilog.Log.ForContext<ErrorHandlerMiddleware>();
 
         public ErrorHandlerMiddleware(RequestDelegate next)
         {
@@ -60,7 +54,7 @@ namespace WebApi.Middlewares
                         break;
                 }
                 var result = JsonSerializer.Serialize(responseModel);
-                Log.Error(error, result);
+                Serilog.Log.ForContext<ErrorHandlerMiddleware>().Error(error, result);
                 await response.WriteAsync(result);
             }
         }
