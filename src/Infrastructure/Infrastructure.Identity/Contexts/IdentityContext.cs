@@ -10,6 +10,9 @@ namespace Infrastructure.Identity.Contexts
         public IdentityContext(DbContextOptions<IdentityContext> options) : base(options)
         {
         }
+
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -51,6 +54,11 @@ namespace Infrastructure.Identity.Contexts
                 entity.ToTable("UserTokens");
             });
             #endregion
+        }
+
+        public override int SaveChanges()
+        {
+            return base.SaveChanges();
         }
     }
 }

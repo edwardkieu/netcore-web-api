@@ -1,14 +1,17 @@
-﻿using Application.DTOs.Account;
+﻿using Application.Commons.Extensions;
+using Application.DTOs.Account;
 using Application.DTOs.Email;
 using Application.Enums;
 using Application.Exceptions;
 using Application.Interfaces;
 using Application.Settings;
 using Application.Wrappers;
+using Infrastructure.Identity.Contexts;
 using Infrastructure.Identity.Helpers;
 using Infrastructure.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -16,6 +19,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,20 +33,26 @@ namespace Infrastructure.Identity.Services
         private readonly IEmailService _emailService;
         private readonly JWTSettings _jwtSettings;
         private readonly IDateTimeService _dateTimeService;
+        private readonly IdentityContext _dbContext;
+        private readonly TokenValidationParameters _tokenValidationParams;
 
         public AccountService(UserManager<AppUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IOptions<JWTSettings> jwtSettings,
             IDateTimeService dateTimeService,
             SignInManager<AppUser> signInManager,
-            IEmailService emailService)
+            IEmailService emailService,
+            IdentityContext dbContext,
+            TokenValidationParameters tokenValidationParams)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _jwtSettings = jwtSettings.Value;
             _dateTimeService = dateTimeService;
             _signInManager = signInManager;
-            this._emailService = emailService;
+            _emailService = emailService;
+            _dbContext = dbContext;
+            _tokenValidationParams = tokenValidationParams;
         }
 
         public async Task<Response<AuthenticationResponse>> AuthenticateAsync(AuthenticationRequest request, string ipAddress)
@@ -61,19 +71,7 @@ namespace Infrastructure.Identity.Services
             {
                 throw new ApiException($"Account Not Confirmed for '{request.Email}'.");
             }
-            var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-            //var refreshToken = GenerateRefreshToken(ipAddress);
-            var jwtSecurityToken = await GenerateJWToken(user);
-            var response = new AuthenticationResponse
-            {
-                Id = user.Id,
-                JWToken = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
-                Email = user.Email,
-                UserName = user.UserName,
-                Roles = rolesList.ToList(),
-                IsVerified = user.EmailConfirmed
-            };
-            return new Response<AuthenticationResponse>(response, $"Authenticated {user.UserName}");
+            return await CreateResponseJWTokenAsync(user);
         }
 
         public async Task<Response<string>> RegisterAsync(RegisterRequest request, string origin)
@@ -99,7 +97,7 @@ namespace Infrastructure.Identity.Services
                     await _userManager.AddToRoleAsync(user, Roles.Basic.ToString());
                     var verificationUri = await SendVerificationEmail(user, origin);
                     //TODO: Attach Email Service here and configure it via appsettings
-                    await _emailService.SendAsync(new Application.DTOs.Email.EmailRequest() { From = "mail@codewithmukesh.com", To = user.Email, Body = $"Please confirm your account by visiting this URL {verificationUri}", Subject = "Confirm Registration" });
+                    await _emailService.SendAsync(new EmailRequest() { From = "mail@codewithmukesh.com", To = user.Email, Body = $"Please confirm your account by visiting this URL {verificationUri}", Subject = "Confirm Registration" });
                     return new Response<string>(user.Id, message: $"User Registered. Please confirm your account by visiting this URL {verificationUri}");
                 }
                 else
@@ -109,8 +107,26 @@ namespace Infrastructure.Identity.Services
             }
             else
             {
-                throw new ApiException($"Email {request.Email } is already registered.");
+                throw new ApiException($"Email {request.Email} is already registered.");
             }
+        }
+
+        private async Task<Response<AuthenticationResponse>> CreateResponseJWTokenAsync(AppUser user)
+        {
+            var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+            var jwtSecurityToken = await GenerateJWToken(user);
+            var response = new AuthenticationResponse
+            {
+                Id = user.Id,
+                Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+                Email = user.Email,
+                UserName = user.UserName,
+                Roles = rolesList.ToList(),
+                IsVerified = user.EmailConfirmed,
+                RefreshToken = GenerateRefreshToken(jwtSecurityToken.Id, user.Id)?.Token
+            };
+
+            return new Response<AuthenticationResponse>(response, $"Authenticated {user.UserName}");
         }
 
         private async Task<JwtSecurityToken> GenerateJWToken(AppUser user)
@@ -150,15 +166,6 @@ namespace Infrastructure.Identity.Services
             return jwtSecurityToken;
         }
 
-        //private string RandomTokenString()
-        //{
-        //    using var rngCryptoServiceProvider = new RNGCryptoServiceProvider();
-        //    var randomBytes = new byte[40];
-        //    rngCryptoServiceProvider.GetBytes(randomBytes);
-        //    // convert random bytes to hex string
-        //    return BitConverter.ToString(randomBytes).Replace("-", "");
-        //}
-
         private async Task<string> SendVerificationEmail(AppUser user, string origin)
         {
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -186,16 +193,27 @@ namespace Infrastructure.Identity.Services
             }
         }
 
-        //private RefreshToken GenerateRefreshToken(string ipAddress)
-        //{
-        //    return new RefreshToken
-        //    {
-        //        Token = RandomTokenString(),
-        //        Expires = DateTime.UtcNow.AddDays(7),
-        //        Created = DateTime.UtcNow,
-        //        CreatedByIp = ipAddress
-        //    };
-        //}
+        private RefreshToken GenerateRefreshToken(string jwtId, string userId)
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                var refreshToken = new RefreshToken
+                {
+                    JwtId = jwtId,
+                    IsUsed = false,
+                    IsRevorked = false,
+                    UserId = userId,
+                    CreatedDate = DateTime.UtcNow,
+                    ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                    Token = Convert.ToBase64String(randomNumber)
+                };
+                _dbContext.RefreshTokens.Add(refreshToken);
+                _dbContext.SaveChanges();
+                return refreshToken;
+            }
+        }
 
         public async Task ForgotPassword(ForgotPasswordRequest model, string origin)
         {
@@ -257,6 +275,91 @@ namespace Infrastructure.Identity.Services
             };
 
             return new Response<UserContextDto>(userContext);
+        }
+
+        public async Task<Response<AuthenticationResponse>> VerifyAndGenerateToken(RefreshTokenRequest tokenRequest)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                // Validation 1 - Validation JWT token format
+                _tokenValidationParams.ValidateLifetime = false;
+                var tokenInVerification = jwtTokenHandler.ValidateToken(tokenRequest.Token, _tokenValidationParams, out var validatedToken);
+                _tokenValidationParams.ValidateLifetime = true;
+
+                // Validation 2 - Validate encryption alg
+                if (validatedToken is JwtSecurityToken jwtSecurityToken)
+                {
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+
+                    if (result == false)
+                    {
+                        return null;
+                    }
+                }
+
+                // Validation 3 - validate expiry date
+                var utcExpiryDate = double.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+
+                var expiryDate = utcExpiryDate.UnixTimeStampToDateTime();
+
+                if (expiryDate > DateTime.UtcNow)
+                {
+                    return new Response<AuthenticationResponse>("Token has not yet expired.");
+                }
+
+                // validation 4 - validate existence of the token
+                var storedToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+
+                if (storedToken == null)
+                {
+                    return new Response<AuthenticationResponse>("Token does not exist.");
+                }
+
+                // Validation 5 - validate if used
+                if (storedToken.IsUsed)
+                {
+                    return new Response<AuthenticationResponse>("Token has been used");
+                }
+
+                // Validation 6 - validate if revoked
+                if (storedToken.IsRevorked)
+                {
+                    return new Response<AuthenticationResponse>("Token has been revoked");
+                }
+
+                // Validation 7 - validate the id
+                var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+
+                if (storedToken.JwtId != jti)
+                {
+                    return new Response<AuthenticationResponse>("Token doesn't match");
+                }
+
+                // Validation 8 - validate stored token expiry date
+                if (storedToken.ExpiryDate < DateTime.UtcNow)
+                {
+                    return new Response<AuthenticationResponse>("Refresh token has expired. Please re-login");
+                }
+
+                // update current token
+                storedToken.IsUsed = true;
+                _dbContext.RefreshTokens.Update(storedToken);
+                await _dbContext.SaveChangesAsync();
+
+                // Generate a new token
+                var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
+                return await CreateResponseJWTokenAsync(dbUser);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Lifetime validation failed. The token is expired."))
+                {
+                    return new Response<AuthenticationResponse>("Token has expired please re-login");
+                }
+                return new Response<AuthenticationResponse>("Something went wrong.");
+            }
         }
     }
 }

@@ -48,8 +48,21 @@ namespace Infrastructure.Identity
             services.AddTransient<IAccountService, AccountService>();
 
             #endregion Services
-
+            // manual validation token
+            // https://jasonwatmore.com/post/2020/07/21/aspnet-core-3-create-and-validate-jwt-tokens-use-custom-jwt-middleware
             services.Configure<JWTSettings>(configuration.GetSection("JWTSettings"));
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero,
+                ValidIssuer = configuration["JWTSettings:Issuer"],
+                ValidAudience = configuration["JWTSettings:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWTSettings:Key"]))
+            };
+            services.AddSingleton(tokenValidationParameters);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -59,17 +72,7 @@ namespace Infrastructure.Identity
                 {
                     o.RequireHttpsMetadata = false;
                     o.SaveToken = false;
-                    o.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.Zero,
-                        ValidIssuer = configuration["JWTSettings:Issuer"],
-                        ValidAudience = configuration["JWTSettings:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWTSettings:Key"]))
-                    };
+                    o.TokenValidationParameters = tokenValidationParameters;
                     o.Events = new JwtBearerEvents()
                     {
                         OnAuthenticationFailed = c =>

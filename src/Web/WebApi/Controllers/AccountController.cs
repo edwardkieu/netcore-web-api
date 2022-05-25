@@ -32,6 +32,15 @@ namespace WebApi.Controllers
             return Ok(await _accountService.AuthenticateAsync(request, GenerateIpAddress()));
         }
 
+        [HttpPost]
+        [Route("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest tokenRequest)
+        {
+            var result = await _accountService.VerifyAndGenerateToken(tokenRequest);
+
+            return Ok(result);
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync(RegisterRequest request)
         {

@@ -19,5 +19,7 @@ namespace Application.Interfaces
         Task<string> GetUserName(string userId);
 
         Task<Response<UserContextDto>> GetUserAsync(string userId);
+
+        Task<Response<AuthenticationResponse>> VerifyAndGenerateToken(RefreshTokenRequest tokenRequest);
     }
 }
