@@ -21,5 +21,7 @@ namespace Application.Interfaces
         Task<Response<UserContextDto>> GetUserAsync(string userId);
 
         Task<Response<AuthenticationResponse>> VerifyAndGenerateToken(RefreshTokenRequest tokenRequest);
+
+        Task<bool> RevokeToken(string token);
     }
 }

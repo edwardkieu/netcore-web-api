@@ -6,7 +6,7 @@ using Application.Wrappers;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/account")]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -19,7 +19,7 @@ namespace WebApi.Controllers
             _authenticatedUserService = authenticatedUserService;
         }
 
-        [HttpGet("context")]
+        [HttpGet("info")]
         public async Task<IActionResult> ContextAsync(string token)
         {
             var result = new Response<UserContextDto>(_authenticatedUserService.CurrentUser);
@@ -34,11 +34,20 @@ namespace WebApi.Controllers
 
         [HttpPost]
         [Route("refresh-token")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest tokenRequest)
+        public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenRequest tokenRequest)
         {
             var result = await _accountService.VerifyAndGenerateToken(tokenRequest);
 
             return Ok(result);
+        }
+
+        [HttpPost("revoke-token")]
+        public async Task<IActionResult> RevokeTokenAsync([FromBody] RevokeTokenRequest revokeTokenRequest)
+        {
+            var result = await _accountService.RevokeToken(revokeTokenRequest.RefreshToken);
+
+            return Ok(result);
+
         }
 
         [HttpPost("register")]

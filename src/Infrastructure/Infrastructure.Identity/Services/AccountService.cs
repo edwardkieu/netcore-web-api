@@ -107,10 +107,9 @@ namespace Infrastructure.Identity.Services
             }
             else
             {
-                throw new ApiException($"Email {request.Email} is already registered.");
+                throw new ApiException($"Email {request.Email } is already registered.");
             }
         }
-
         private async Task<Response<AuthenticationResponse>> CreateResponseJWTokenAsync(AppUser user)
         {
             var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
@@ -128,7 +127,6 @@ namespace Infrastructure.Identity.Services
 
             return new Response<AuthenticationResponse>(response, $"Authenticated {user.UserName}");
         }
-
         private async Task<JwtSecurityToken> GenerateJWToken(AppUser user)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
@@ -295,12 +293,12 @@ namespace Infrastructure.Identity.Services
 
                     if (result == false)
                     {
-                        return null;
+                        return new Response<AuthenticationResponse>("Invalid Security Algorithms.");
                     }
                 }
 
                 // Validation 3 - validate expiry date
-                var utcExpiryDate = double.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+                var utcExpiryDate = double.Parse(tokenInVerification.FindFirstValue(JwtRegisteredClaimNames.Exp));
 
                 var expiryDate = utcExpiryDate.UnixTimeStampToDateTime();
 
@@ -330,7 +328,7 @@ namespace Infrastructure.Identity.Services
                 }
 
                 // Validation 7 - validate the id
-                var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+                var jti = tokenInVerification.FindFirstValue(JwtRegisteredClaimNames.Jti);
 
                 if (storedToken.JwtId != jti)
                 {
@@ -350,16 +348,29 @@ namespace Infrastructure.Identity.Services
 
                 // Generate a new token
                 var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
-                return await CreateResponseJWTokenAsync(dbUser);
+                return  await CreateResponseJWTokenAsync(dbUser);
             }
             catch (Exception ex)
             {
                 if (ex.Message.Contains("Lifetime validation failed. The token is expired."))
                 {
                     return new Response<AuthenticationResponse>("Token has expired please re-login");
+
                 }
                 return new Response<AuthenticationResponse>("Something went wrong.");
             }
+        }
+
+        public async Task<bool> RevokeToken(string token)
+        {
+            var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token.Equals(token));
+            if (refreshToken == null || !refreshToken.IsRevorked) 
+                return false;
+            
+            refreshToken.IsRevorked = true;
+            _dbContext.Update(refreshToken);
+
+            return _dbContext.SaveChanges() > 0;
         }
     }
 }

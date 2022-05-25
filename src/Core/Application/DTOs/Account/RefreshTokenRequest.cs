@@ -10,4 +10,10 @@ namespace Application.DTOs.Account
         [Required]
         public string RefreshToken { get; set; }
     }
+    
+    public class RevokeTokenRequest
+    {
+        [Required]
+        public string RefreshToken { get; set; }
+    }
 }
