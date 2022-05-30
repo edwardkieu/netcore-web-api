@@ -57,7 +57,7 @@ namespace Infrastructure.Persistence.Repositories
             if (_context == null)
             {
                 var serviceScope = _serviceProvider.CreateScope();
-                return serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
+                return serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             }
             return _context;
         }
@@ -84,6 +84,11 @@ namespace Infrastructure.Persistence.Repositories
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public bool HasChanges()
+        {
+            return _context.ChangeTracker.HasChanges();
         }
 
         #endregion IDisposable Support

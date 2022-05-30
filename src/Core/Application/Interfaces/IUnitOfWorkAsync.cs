@@ -21,5 +21,7 @@ namespace Application.Interfaces
         Task RollbackAsync(CancellationToken cancellationToken);
 
         DbContext GetContext();
+
+        bool HasChanges();
     }
 }

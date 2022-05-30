@@ -14,14 +14,10 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Identity.Services
 {
@@ -107,9 +103,10 @@ namespace Infrastructure.Identity.Services
             }
             else
             {
-                throw new ApiException($"Email {request.Email } is already registered.");
+                throw new ApiException($"Email {request.Email} is already registered.");
             }
         }
+
         private async Task<Response<AuthenticationResponse>> CreateResponseJWTokenAsync(AppUser user)
         {
             var rolesList = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
@@ -122,11 +119,12 @@ namespace Infrastructure.Identity.Services
                 UserName = user.UserName,
                 Roles = rolesList.ToList(),
                 IsVerified = user.EmailConfirmed,
-                RefreshToken = GenerateRefreshToken(jwtSecurityToken.Id, user.Id)?.Token
+                RefreshToken = GenerateRefreshToken(jwtSecurityToken.Id, user.Id)?.Token ?? string.Empty
             };
 
             return new Response<AuthenticationResponse>(response, $"Authenticated {user.UserName}");
         }
+
         private async Task<JwtSecurityToken> GenerateJWToken(AppUser user)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
@@ -348,14 +346,13 @@ namespace Infrastructure.Identity.Services
 
                 // Generate a new token
                 var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
-                return  await CreateResponseJWTokenAsync(dbUser);
+                return await CreateResponseJWTokenAsync(dbUser);
             }
             catch (Exception ex)
             {
                 if (ex.Message.Contains("Lifetime validation failed. The token is expired."))
                 {
                     return new Response<AuthenticationResponse>("Token has expired please re-login");
-
                 }
                 return new Response<AuthenticationResponse>("Something went wrong.");
             }
@@ -364,9 +361,9 @@ namespace Infrastructure.Identity.Services
         public async Task<bool> RevokeToken(string token)
         {
             var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token.Equals(token));
-            if (refreshToken == null || !refreshToken.IsRevorked) 
+            if (refreshToken == null || !refreshToken.IsRevorked)
                 return false;
-            
+
             refreshToken.IsRevorked = true;
             _dbContext.Update(refreshToken);
 

@@ -1,13 +1,35 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Application.Wrappers;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
 
 namespace WebApi.Extensions
 {
     public static class ServiceExtensions
     {
+        public static void AddApiValidationBehavior(this IServiceCollection services)
+        {
+            // validation error reponse
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = actionContext =>
+                {
+                    var errors = actionContext.ModelState
+                        .Where(e => e.Value?.Errors.Count > 0)
+                        .SelectMany(x => x.Value.Errors)
+                        .Select(x => x.ErrorMessage).ToList();
+                    
+                    var responseModel = new Response<string>
+                    {
+                        Succeeded = false,
+                        Message = String.Empty,
+                        Errors = errors
+                    };
+
+                    return new BadRequestObjectResult(responseModel);
+                };
+            });
+        }
+
         public static void AddSwaggerExtension(this IServiceCollection services)
         {
             services.AddSwaggerGen(c =>
