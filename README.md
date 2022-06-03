@@ -1,6 +1,6 @@
 # ASP.NET Core WebApi - Clean Architecture
 
-An Implementation of Clean Architecture with ASP.NET Core 3.1 WebApi. With this Open-Source, you will get access to the world of Loosely-Coupled and Inverted-Dependency Architecture in ASP.NET Core 3.1 WebApi with a lot of best practices.
+An Implementation of Clean Architecture with ASP.NET Core 6 WebApi. With this Open-Source, you will get access to the world of Loosely-Coupled and Inverted-Dependency Architecture in ASP.NET Core 6 WebApi with a lot of best practices.
 
 ### Alternatively you can also clone the Repository.
 
@@ -11,13 +11,13 @@ An Implementation of Clean Architecture with ASP.NET Core 3.1 WebApi. With this 
 - dotnet restore
 - dotnet ef database update -Context ApplicationDbContext
 - dotnet ef database update -Context IdentityContext
-- dotnet run (OR) Run the Solution using Visual Studio 2019
+- dotnet run (OR) Run the Solution using Visual Studio 2022
 
 ## Technologies
 
-- ASP.NET Core 3.1 WebApi
+- ASP.NET Core 6 WebApi
 - REST Standards
-- .NET Core 3.1 / .NET 5
+- .NET Core 6
 
 ## Features
 
