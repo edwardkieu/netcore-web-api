@@ -1,5 +1,6 @@
 using Application;
 using Application.Commons.Extensions;
+using Application.Commons.Helpers;
 using Application.Constants;
 using Application.Interfaces;
 using Infrastructure.Identity;
@@ -12,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Serilog;
 using WebApi.Extensions;
 using WebApi.Services;
@@ -30,7 +32,6 @@ builder.WebHost.UseUrls("https://localhost:8000");
 // Register container services
 builder.Services.AddCors(options =>
 {
-    var a = builder.Configuration.GetSection("AppSettings:CorsAllowSpecific:WithHeaders").Get<string[]>();
     options.AddPolicy("CorsAllowAll",
         policy =>
         {
@@ -41,7 +42,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
         });
 
-    options.AddPolicy(name: Constants.MyAllowSpecificOrigins,
+    options.AddPolicy(name: GlobalConstants.ALLOW_SPECIFIC_CORS,
         policy =>
         {
             policy
@@ -58,14 +59,25 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddSharedInfrastructure(builder.Configuration);
 builder.Services.AddSwaggerExtension();
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews()
+    //.AddJsonOptions(options =>
+    //{
+    //    options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+    //})
+    .AddNewtonsoftJson(opt =>
+    {
+        opt.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+        opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+        opt.SerializerSettings.NullValueHandling = NullValueHandling.Include;
+        opt.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+    });
 builder.Services.AddApiVersioningExtension();
 builder.Services.AddHealthChecks()
     .AddCheck<SqlServerHealthCheck>("Sql", tags: new[] { "example" })
     //.AddCheck<ReadisHealthcheck>("Redis")
     .AddCheck<HttpHealthCheck>("Http", tags: new[] { "example" });
-builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
-
+builder.Services.AddTransient<IAuthenticatedUserService, AuthenticatedUserService>();
+builder.Services.AddTransient<IViewRenderService, ViewRenderService>();
 // Register request pineline
 var app = builder.Build();
 
@@ -87,7 +99,7 @@ app.UseErrorHandlingMiddleware();
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
 app.UseRouting();
-app.UseCors(app.Configuration.GetValue<bool>("AppSettings:CorsAllowSpecific:AllowAll")? "CorsAllowAll" : Constants.MyAllowSpecificOrigins);
+app.UseCors(app.Configuration.GetValue<bool>("AppSettings:CorsAllowSpecific:AllowAll")? "CorsAllowAll" : GlobalConstants.ALLOW_SPECIFIC_CORS);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseDefaultFiles();

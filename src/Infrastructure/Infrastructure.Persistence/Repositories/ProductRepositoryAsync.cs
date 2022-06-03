@@ -15,9 +15,9 @@ namespace Infrastructure.Persistence.Repositories
             _context = dbContext;
         }
 
-        public Task<bool> IsUniqueBarcodeAsync(string barcode)
+        public async Task<bool> IsUniqueBarcodeAsync(string barcode)
         {
-            return _context.Products.AnyAsync(p => p.Barcode == barcode);
+            return !await _context.Products.AnyAsync(p => p.Barcode == barcode);
         }
     }
 }

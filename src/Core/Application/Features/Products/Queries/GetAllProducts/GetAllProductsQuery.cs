@@ -29,16 +29,16 @@ namespace Application.Features.Products.Queries.GetAllProducts
 
         public async Task<PagedResponse<IEnumerable<GetAllProductsViewModel>>> Handle(GetAllProductsQuery request, CancellationToken cancellationToken)
         {
-            var validFilter = _mapper.Map<GetAllProductsParameter>(request);
+            var getAllQuery = _mapper.Map<GetAllProductsParameter>(request);
             var (query, totalCount) = _productRepository
                 .FindAll()
-                .ToPaginatedList(validFilter.PageNumber, validFilter.PageSize);
+                .ToPaginatedList(getAllQuery.PageNumber, getAllQuery.PageSize);
             var products = await query
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
             var productViewModel = _mapper.Map<IEnumerable<GetAllProductsViewModel>>(products);
 
-            return new PagedResponse<IEnumerable<GetAllProductsViewModel>>(productViewModel, totalCount, validFilter.PageNumber, validFilter.PageSize);
+            return new PagedResponse<IEnumerable<GetAllProductsViewModel>>(productViewModel, totalCount, getAllQuery.PageNumber, getAllQuery.PageSize);
         }
     }
 }

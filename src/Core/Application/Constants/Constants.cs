@@ -1,7 +1,11 @@
 ﻿namespace Application.Constants
 {
-    public static class Constants
+    public static class GlobalConstants
     {
-        public const string MyAllowSpecificOrigins = "CorsAllowSpecific";
+        public const string ALLOW_SPECIFIC_CORS = "CorsAllowSpecific";
+        /// <summary>
+        /// Date format 1970-09-24T20:04:00
+        /// </summary>
+        public const string DATE_TIME_FORMAT = "dd//MM/yyyy"; //"yyyy-MM-ddTHH:mm:ss";
     }
 }

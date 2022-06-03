@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Application.Wrappers;
+using Application.Commons.Extensions;
 
 namespace WebApi.Controllers
 {
@@ -12,11 +13,13 @@ namespace WebApi.Controllers
     {
         private readonly IAccountService _accountService;
         private readonly IAuthenticatedUserService _authenticatedUserService;
+        private readonly IViewRenderService _razorService;
 
-        public AccountController(IAccountService accountService, IAuthenticatedUserService authenticatedUserService)
+        public AccountController(IAccountService accountService, IAuthenticatedUserService authenticatedUserService, IViewRenderService razorService)
         {
             _accountService = accountService;
             _authenticatedUserService = authenticatedUserService;
+            _razorService = razorService;
         }
 
         [HttpGet("info")]
@@ -74,6 +77,15 @@ namespace WebApi.Controllers
         public async Task<IActionResult> ResetPassword(ResetPasswordRequest model)
         {
             return Ok(await _accountService.ResetPassword(model));
+        }
+
+        [HttpPost("export")]
+        public async Task<IActionResult> Export()
+        {
+            var html = await _razorService.RenderToStringAsync("~/Views/Account/_ExportData.cshtml", _authenticatedUserService.CurrentUser);
+            var bytes = html.PrintPdf();
+
+            return File(bytes, "application/pdf", _authenticatedUserService.CurrentUser.Id + ".pdf");
         }
 
         private string GenerateIpAddress()

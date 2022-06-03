@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace WebApi.Controllers.v1
 {
     [Route("api/v{version:apiVersion}/products")]
+    [AllowAnonymous]
     public class ProductController : ApiControllerBase
     {
         [HttpGet]
@@ -25,14 +26,14 @@ namespace WebApi.Controllers.v1
         }
 
         [HttpPost]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> Post(CreateProductCommand command)
         {
             return Ok(await Mediator.Send(command));
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> Put(int id, UpdateProductCommand command)
         {
             if (id != command.Id)
@@ -43,7 +44,7 @@ namespace WebApi.Controllers.v1
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             return Ok(await Mediator.Send(new DeleteProductByIdCommand { Id = id }));

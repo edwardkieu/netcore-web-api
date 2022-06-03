@@ -9,6 +9,10 @@ namespace WebApi.Extensions
         public static void AddApiValidationBehavior(this IServiceCollection services)
         {
             // validation error reponse
+            //services.Configure<ApiBehaviorOptions>(options =>
+            //{
+            //    options.SuppressModelStateInvalidFilter = true;
+            //});
             services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.InvalidModelStateResponseFactory = actionContext =>
