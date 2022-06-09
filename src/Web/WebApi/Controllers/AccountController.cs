@@ -88,12 +88,12 @@ namespace WebApi.Controllers
             return File(bytes, "application/pdf", _authenticatedUserService.CurrentUser.Id + ".pdf");
         }
 
-        private string GenerateIpAddress()
+        private string? GenerateIpAddress()
         {
             if (Request.Headers.ContainsKey("X-Forwarded-For"))
                 return Request.Headers["X-Forwarded-For"];
             else
-                return HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                return HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString();
         }
     }
 }

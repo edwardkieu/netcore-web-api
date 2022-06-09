@@ -21,7 +21,7 @@ namespace WebApi.Extensions
                         .Where(e => e.Value?.Errors.Count > 0)
                         .SelectMany(x => x.Value.Errors)
                         .Select(x => x.ErrorMessage).ToList();
-                    
+
                     var responseModel = new Response<string>
                     {
                         Succeeded = false,

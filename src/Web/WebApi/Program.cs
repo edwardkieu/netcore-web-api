@@ -1,24 +1,6 @@
-using Application;
-using Application.Commons.Extensions;
-using Application.Commons.Helpers;
-using Application.Constants;
-using Application.Interfaces;
-using Infrastructure.Identity;
-using Infrastructure.Identity.Models;
-using Infrastructure.Persistence;
-using Infrastructure.Shared;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using Serilog;
-using WebApi.Extensions;
-using WebApi.Services;
-
 // Initialize Logger
+using FluentValidation.AspNetCore;
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(GetConfiguration())
     .Enrich.FromLogContext()
@@ -42,7 +24,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
         });
 
-    options.AddPolicy(name: GlobalConstants.ALLOW_SPECIFIC_CORS,
+    options.AddPolicy(name: GlobalConstants.AllowSpecificCors,
         policy =>
         {
             policy
@@ -59,7 +41,14 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration);
 builder.Services.AddPersistenceInfrastructure(builder.Configuration);
 builder.Services.AddSharedInfrastructure(builder.Configuration);
 builder.Services.AddSwaggerExtension();
+// using fluent validation
+//builder.Services.AddControllers()
+//                .AddFluentValidation();
+
+// ussing default validation
+builder.Services.AddControllers(options => options.Filters.Add(typeof(ValidateModelFilter)));
 builder.Services.AddControllersWithViews()
+    //.AddControllersWithViews(options => options.Filters.Add(typeof(ValidateModelFilter)))
     //.AddJsonOptions(options =>
     //{
     //    options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
@@ -99,7 +88,7 @@ app.UseErrorHandlingMiddleware();
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
 app.UseRouting();
-app.UseCors(app.Configuration.GetValue<bool>("AppSettings:CorsAllowSpecific:AllowAll")? "CorsAllowAll" : GlobalConstants.ALLOW_SPECIFIC_CORS);
+app.UseCors(app.Configuration.GetValue<bool>("AppSettings:CorsAllowSpecific:AllowAll")? "CorsAllowAll" : GlobalConstants.AllowSpecificCors);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseDefaultFiles();

@@ -1,5 +1,4 @@
-﻿using Application.Features.Products.Commands.CreateProduct;
-using Application.Features.Products.Queries.GetAllProducts;
+﻿using Application.ViewModels.Products;
 using AutoMapper;
 using Domain.Entities;
 
@@ -9,9 +8,8 @@ namespace Application.Mappings
     {
         public GeneralProfile()
         {
-            CreateMap<Product, GetAllProductsViewModel>().ReverseMap();
-            CreateMap<CreateProductCommand, Product>();
-            CreateMap<GetAllProductsQuery, GetAllProductsParameter>();
+            CreateMap<ProductViewModel, Product>().ReverseMap();
+            CreateMap<CreateProductViewModel, Product>().ReverseMap();
         }
     }
 }

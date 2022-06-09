@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static System.DateTime;
 
 namespace Application.Commons.Helpers
 {
@@ -10,16 +11,15 @@ namespace Application.Commons.Helpers
     {
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            DateTime dt;
-            DateTime.TryParseExact(reader.GetString(),
-                                   GlobalConstants.DATE_TIME_FORMAT,
+            TryParseExact(reader.GetString(),
+                                   GlobalConstants.DateTimeFormat,
                                    CultureInfo.InvariantCulture,
                                    DateTimeStyles.None,
-                                   out dt);
+                                   out var dt);
 
-            if (dt == DateTime.MinValue)
+            if (dt == MinValue)
             {
-                DateTime.TryParse(reader.GetString(), out dt);
+                TryParse(reader.GetString(), out dt);
             }
 
             return dt;
@@ -27,7 +27,7 @@ namespace Application.Commons.Helpers
 
         public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
-            writer.WriteStringValue(value.ToString(GlobalConstants.DATE_TIME_FORMAT));
+            writer.WriteStringValue(value.ToString(GlobalConstants.DateTimeFormat));
         }
     }
 }

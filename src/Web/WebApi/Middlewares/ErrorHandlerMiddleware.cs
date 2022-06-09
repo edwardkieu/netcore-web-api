@@ -1,62 +1,56 @@
-﻿using Application.Exceptions;
-using Application.Wrappers;
-using System.Net;
-using System.Text.Json;
+﻿namespace WebApi.Middlewares;
 
-namespace WebApi.Middlewares
+public class ErrorHandlerMiddleware
 {
-    public class ErrorHandlerMiddleware
+    private readonly RequestDelegate _next;
+
+    public ErrorHandlerMiddleware(RequestDelegate next)
     {
-        private readonly RequestDelegate _next;
+        _next = next;
+    }
 
-        public ErrorHandlerMiddleware(RequestDelegate next)
+    public async Task Invoke(HttpContext context)
+    {
+        try
         {
-            _next = next;
+            await _next(context);
         }
-
-        public async Task Invoke(HttpContext context)
+        catch (Exception error)
         {
-            try
+            var response = context.Response;
+            response.ContentType = "application/json";
+            var responseModel = new Response<string>
             {
-                await _next(context);
-            }
-            catch (Exception error)
+                Succeeded = false,
+                Message = error.Message
+            };
+
+            switch (error)
             {
-                var response = context.Response;
-                response.ContentType = "application/json";
-                var responseModel = new Response<string>
-                {
-                    Succeeded = false,
-                    Message = error.Message
-                };
+                case ApiException _:
+                    // custom application error
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    break;
 
-                switch (error)
-                {
-                    case ApiException _:
-                        // custom application error
-                        response.StatusCode = (int)HttpStatusCode.BadRequest;
-                        break;
+                case ValidationException ex:
+                    // custom application error
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    responseModel.Errors = ex.Errors;
+                    break;
 
-                    case ValidationException ex:
-                        // custom application error
-                        response.StatusCode = (int)HttpStatusCode.BadRequest;
-                        responseModel.Errors = ex.Errors;
-                        break;
+                case KeyNotFoundException _:
+                    // not found error
+                    response.StatusCode = (int)HttpStatusCode.NotFound;
+                    break;
 
-                    case KeyNotFoundException _:
-                        // not found error
-                        response.StatusCode = (int)HttpStatusCode.NotFound;
-                        break;
-
-                    default:
-                        // unhandled error
-                        response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                        break;
-                }
-                var result = JsonSerializer.Serialize(responseModel);
-                Serilog.Log.ForContext<ErrorHandlerMiddleware>().Error(error, result);
-                await response.WriteAsync(result);
+                default:
+                    // unhandled error
+                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    break;
             }
+            var result = System.Text.Json.JsonSerializer.Serialize(responseModel);
+            Serilog.Log.ForContext<ErrorHandlerMiddleware>().Error(error, result);
+            await response.WriteAsync(result);
         }
     }
 }

@@ -1,12 +1,10 @@
 ﻿using FluentValidation.Results;
-using System;
-using System.Collections.Generic;
 
 namespace Application.Exceptions
 {
     public class ValidationException : Exception
     {
-        public ValidationException() : base("One or more validation failures have occurred.")
+        private ValidationException() : base("One or more validation failures have occurred.")
         {
             Errors = new List<string>();
         }

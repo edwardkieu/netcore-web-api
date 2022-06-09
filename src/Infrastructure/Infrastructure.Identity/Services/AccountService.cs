@@ -51,7 +51,7 @@ namespace Infrastructure.Identity.Services
             _tokenValidationParams = tokenValidationParams;
         }
 
-        public async Task<Response<AuthenticationResponse>> AuthenticateAsync(AuthenticationRequest request, string ipAddress)
+        public async Task<Response<AuthenticationResponse>> AuthenticateAsync(AuthenticationRequest request, string? ipAddress)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)

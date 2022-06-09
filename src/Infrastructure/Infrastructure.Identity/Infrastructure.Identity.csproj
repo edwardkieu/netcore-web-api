@@ -9,14 +9,14 @@
   <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.5" />
   <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.5" />
   <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.5" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.5" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.5">
+  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0-preview.4.22229.2" />
+  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0-preview.4.22229.2">
     <PrivateAssets>all</PrivateAssets>
     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
   </PackageReference>
-  <PackageReference Include="microsoft.extensions.dependencyinjection" Version="6.0.0" />
+  <PackageReference Include="microsoft.extensions.dependencyinjection" Version="7.0.0-preview.4.22229.4" />
   <PackageReference Include="MimeKit" Version="3.2.0" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.5" />
+  <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.0-preview.4.22229.2" />
   <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.18.0" />
   <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
   </ItemGroup>
