@@ -8,6 +8,12 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+//builder.Host.ConfigureAppConfiguration(config =>
+//{
+//    config
+//    .AddJsonFile($"appsettings.json", true, true)
+//    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: false, reloadOnChange: true);
+//});
 builder.Host.UseSerilog(Log.Logger);
 builder.WebHost.UseUrls("https://localhost:8000");
 
